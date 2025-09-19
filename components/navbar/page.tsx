@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth-safe";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ThemeSwitcher } from "../theme-switcher";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
     return (
         <>
-    <div className="w-full bg-white border-b shadow-sm"></div>
+        {/* //make a navbar with border shadow and outline and bg blur  */}
+    <div className="w-full   border-2 outline shadow-sm backdrop-blur-md">
       <div className="container mx-auto p-4 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold">RLS Guard Dog</Link>
         <div></div>
@@ -22,6 +24,7 @@ export default async function Navbar() {
                 <Link href="/auth/logout">
                   <Button variant="ghost">Logout</Button>
                 </Link>
+                <ThemeSwitcher />
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -33,6 +36,7 @@ export default async function Navbar() {
                 </Link>
             </div>
             )}
+        </div>
         </div>
     </>
   );
