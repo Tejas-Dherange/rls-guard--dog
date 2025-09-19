@@ -1,105 +1,288 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# RLS Guard Dog 🐕‍🦺
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A comprehensive Next.js school management system demonstrating **Row-Level Security (RLS)** with role-based access control using **Supabase**, **MongoDB Atlas**, and **Edge Functions**.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## 🚀 Project Overview
 
-## Features
+This project simulates a school system with three user roles:
+- **Students** - Can only view their own progress
+- **Teachers** - Can manage students in their assigned classes  
+- **Head Teachers** - Can view all data across their school
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+## 🛠️ Tech Stack
 
-## Demo
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Radix UI
+- **Backend**: Supabase (Auth + Database + Edge Functions)
+- **Database**: PostgreSQL (Supabase) + MongoDB Atlas
+- **Authentication**: Supabase Auth with role-based permissions
+- **Deployment**: Vercel (Next.js) + Supabase (Functions)
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+## 📊 Database Schema
 
-## Deploy to Vercel
+### Supabase (PostgreSQL)
+- `profiles` - User profiles with roles
+- `schools` - School information
+- `classrooms` - Classes with teacher assignments
+- `students` - Student records linked to users
+- `progress` - Assessment results with RLS policies
 
-Vercel deployment will guide you through creating a Supabase account and project.
+### MongoDB Atlas
+- `class_averages` - Calculated class performance metrics
+- `analytics` - School-wide performance analytics
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 🔐 Row-Level Security Policies
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+### Students
+```sql
+-- Students can only see their own progress
+CREATE POLICY "Students can view own progress" ON progress
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM students s
+      WHERE s.id = progress.student_id 
+      AND s.user_id = auth.uid()
+    )
+  );
+```
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+### Teachers  
+```sql
+-- Teachers can manage students in their classes
+CREATE POLICY "Teachers can manage class progress" ON progress
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM classrooms c
+      WHERE c.id = progress.class_id 
+      AND c.teacher_id = auth.uid()
+    )
+  );
+```
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### Head Teachers
+```sql
+-- Head teachers can view all school data
+CREATE POLICY "Head teachers can manage school progress" ON progress
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE profiles.id = auth.uid() 
+      AND profiles.role = 'head_teacher'
+    )
+  );
+```
 
-## Clone and run locally
+## 🚀 Getting Started
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+### Prerequisites
+- Node.js 18+
+- Supabase account
+- MongoDB Atlas account
+- Git
 
-2. Create a Next.js app using the Supabase Starter template npx command
+### 1. Clone the Repository
+```bash
+git clone <your-repo-url>
+cd guard-dog
+npm install
+```
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+### 2. Environment Setup
+Create `.env.local` from `.env.example`:
+```bash
+cp .env.example .env.local
+```
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+Fill in your environment variables:
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+# MongoDB Atlas  
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/guard-dog-school
 
-3. Use `cd` to change into the app's directory
+# Next.js
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+```
 
-   ```bash
-   cd with-supabase-app
-   ```
+### 3. Database Setup
 
-4. Rename `.env.example` to `.env.local` and update the following:
+#### Supabase Setup
+1. Create a new Supabase project
+2. Run the migration files in order:
+```bash
+# In Supabase SQL Editor, run these files:
+supabase/migrations/001_initial_schema.sql
+supabase/migrations/002_rls_policies.sql
+supabase/migrations/003_seed_data.sql
+```
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+#### MongoDB Atlas Setup
+1. Create a MongoDB Atlas cluster
+2. Get your connection string
+3. The collections will be created automatically when first used
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+### 4. Supabase Edge Functions (Optional)
+```bash
+# Install Supabase CLI
+npm install -g supabase
 
-5. You can now run the Next.js local development server:
+# Login to Supabase
+supabase login
 
-   ```bash
-   npm run dev
-   ```
+# Link your project
+supabase link --project-ref your-project-ref
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+# Deploy Edge Function
+supabase functions deploy calculate-averages
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+# Set environment secrets
+supabase secrets set MONGODB_URI="your_mongodb_connection_string"
+```
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+### 5. Run the Development Server
+```bash
+npm run dev
+```
 
-## Feedback and issues
+Visit `http://localhost:3000` to see the application.
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+## 📱 Features & Pages
 
-## More Supabase examples
+### Authentication (`/auth`)
+- **Login** - Email/password authentication
+- **Sign Up** - User registration with role selection
+- **Forgot Password** - Password reset flow
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+### Dashboard (`/dashboard`)
+- **Student View** - Personal progress and class info
+- **Teacher View** - Class overview and student management
+- **Head Teacher View** - School-wide analytics
+
+### Teacher Management (`/teacher`)
+- Add progress records for students
+- View class performance
+- Trigger average calculations
+- MongoDB integration display
+
+## 🔄 MongoDB Integration
+
+The system uses both Supabase (PostgreSQL) and MongoDB for different purposes:
+
+- **Supabase**: Real-time data, authentication, RLS policies
+- **MongoDB**: Analytics, aggregated data, calculated averages
+
+### Calculate Averages Flow
+1. Teacher triggers calculation via UI
+2. Next.js API route fetches progress data from Supabase
+3. Calculations performed and saved to MongoDB
+4. Results displayed in teacher dashboard
+
+## 🚦 API Routes
+
+### `/api/class-averages`
+- **GET**: Fetch calculated averages from MongoDB
+- **Authentication**: Required (Teacher/Head Teacher)
+
+### `/api/calculate-averages`  
+- **POST**: Calculate and save class averages
+- **Authentication**: Required (Teacher/Head Teacher)
+
+## 🛡️ Security Features
+
+### Role-Based Access Control
+- Middleware protection on all routes
+- Supabase RLS policies enforce data access
+- MongoDB queries filtered by user permissions
+
+### Authentication Flow
+1. User signs up with role selection
+2. Profile created in Supabase with role
+3. Middleware checks role on protected routes
+4. RLS policies filter database queries
+
+## 🚀 Deployment
+
+### Vercel (Next.js App)
+1. Connect GitHub repository to Vercel
+2. Add environment variables in Vercel dashboard
+3. Deploy automatically on push
+
+### Supabase (Edge Functions)
+```bash
+# Deploy functions
+supabase functions deploy calculate-averages
+
+# Set production secrets
+supabase secrets set MONGODB_URI="production_mongodb_uri"
+```
+
+## 📚 Project Structure
+
+```
+guard-dog/
+├── app/                    # Next.js App Router
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Role-based dashboard
+│   ├── teacher/           # Teacher management
+│   └── api/               # API routes
+├── components/            # React components
+│   ├── ui/                # Shadcn/ui components
+│   └── auth/              # Auth-specific components
+├── lib/                   # Utilities and configurations
+│   ├── supabase/          # Supabase clients
+│   ├── models/            # MongoDB Mongoose models
+│   ├── auth.ts            # Authentication utilities
+│   └── mongodb.ts         # MongoDB connection
+├── supabase/              # Supabase configuration
+│   ├── migrations/        # SQL migration files
+│   └── functions/         # Edge Functions
+└── middleware.ts          # Route protection middleware
+```
+
+## 🧪 Testing
+
+### User Roles for Testing
+Use the seed data to test different roles:
+
+**Teacher Account:**
+- Email: `john.teacher@school.edu`
+- Role: `teacher`
+
+**Head Teacher Account:**  
+- Email: `mary.head@school.edu`
+- Role: `head_teacher`
+
+**Student Account:**
+- Email: `alice.student@school.edu` 
+- Role: `student`
+
+### Test Scenarios
+1. **Student Login** - Should only see own progress
+2. **Teacher Login** - Should see assigned class data
+3. **Head Teacher Login** - Should see all school data
+4. **Route Protection** - Unauthorized access should redirect
+5. **MongoDB Integration** - Calculate and view averages
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🔗 Live Demo
+
+- **Vercel Deployment**: [Your Vercel URL]
+- **GitHub Repository**: [Your GitHub URL]
+
+---
+
+**Built with ❤️ using Next.js, Supabase, and MongoDB**
