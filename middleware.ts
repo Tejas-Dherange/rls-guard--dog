@@ -2,6 +2,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Temporarily disable role-based checks to troubleshoot login
   return await updateSession(request);
 }
 
