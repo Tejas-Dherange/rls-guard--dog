@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-safe';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const user = await getCurrentUser();
     
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Group by subject and calculate averages
-      const subjectGroups = progress.reduce((acc: any, record) => {
+      const subjectGroups = progress.reduce((acc: Record<string, { totalMarks: number; totalMaxMarks: number; assessmentCount: number; students: Set<string> }>, record) => {
         if (!acc[record.subject]) {
           acc[record.subject] = {
             totalMarks: 0,
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
       // Create class average records for each subject
       for (const [subject, data] of Object.entries(subjectGroups)) {
-        const subjectData = data as any;
+        const subjectData = data as { totalMarks: number; totalMaxMarks: number; assessmentCount: number; students: Set<string> };
         const averageScore = (subjectData.totalMarks / subjectData.totalMaxMarks) * 100;
 
         const classAverage = {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
           classId: classroom.id,
           className: classroom.name,
           schoolId: classroom.school_id,
-          schoolName: (classroom.schools as any)?.name || 'Unknown School',
+          schoolName: (classroom.schools as { name: string }[] | undefined)?.[0]?.name || 'Unknown School',
           subject: subject,
           averageScore: parseFloat(averageScore.toFixed(2)),
           totalStudents: subjectData.students.size,
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   // For testing, just return the GET response
-  return GET(request);
+  return GET();
 }

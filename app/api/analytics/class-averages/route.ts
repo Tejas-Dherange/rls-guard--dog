@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const schoolId = searchParams.get('schoolId');
     const subject = searchParams.get('subject');
 
-    let query: any = {};
+    const query: Record<string, unknown> = {};
 
     // Apply filters based on user role and query parameters
     if (user.role === 'teacher') {
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const user = await getCurrentUser();
     
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-    } catch (edgeError) {
+    } catch {
       console.log('Edge Function not available, using direct calculation...');
     }
 
@@ -143,11 +143,12 @@ export async function POST(request: NextRequest) {
       }
 
       // Group by subject and calculate averages
-      const subjectGroups = progress.reduce((acc: any, record) => {
+      const subjectGroups = progress.reduce((acc: Record<string, { totalMarks: number; totalMaxMarks: number; count: number; assessmentCount: number; students: Set<string> }>, record) => {
         if (!acc[record.subject]) {
           acc[record.subject] = {
             totalMarks: 0,
             totalMaxMarks: 0,
+            count: 0,
             assessmentCount: 0,
             students: new Set()
           };
@@ -163,14 +164,14 @@ export async function POST(request: NextRequest) {
 
       // Create class average records for each subject
       for (const [subject, data] of Object.entries(subjectGroups)) {
-        const subjectData = data as any;
+        const subjectData = data as { totalMarks: number; totalMaxMarks: number; count: number; assessmentCount: number; students: Set<string> };
         const averageScore = (subjectData.totalMarks / subjectData.totalMaxMarks) * 100;
 
         const classAverage = {
           classId: classroom.id,
           className: classroom.name,
           schoolId: classroom.school_id,
-          schoolName: (classroom.schools as any)?.name || 'Unknown School',
+          schoolName: (classroom.schools as { name: string }[] | undefined)?.[0]?.name || 'Unknown School',
           subject: subject,
           averageScore: parseFloat(averageScore.toFixed(2)),
           totalStudents: subjectData.students.size,

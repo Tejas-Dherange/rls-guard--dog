@@ -4,9 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+interface Student {
+  id: string;
+  name: string;
+  student_number: string;
+  [key: string]: unknown;
+}
+
+interface Classroom {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
 interface AddProgressFormProps {
-  students: any[];
-  classrooms: any[];
+  students: Student[];
+  classrooms: Classroom[];
 }
 
 export function AddProgressForm({ students, classrooms }: AddProgressFormProps) {
@@ -44,7 +57,7 @@ export function AddProgressForm({ students, classrooms }: AddProgressFormProps) 
           <Label htmlFor="student_id">Student *</Label>
           <select id="student_id" name="student_id" required className="w-full p-2 border rounded" title="Select a student to add assessment for">
             <option value="">Select a student</option>
-            {students.map((student: any) => (
+            {students.map((student: Student) => (
               <option key={student.id} value={student.id}>
                 {student.name} ({student.student_number})
               </option>
@@ -56,7 +69,7 @@ export function AddProgressForm({ students, classrooms }: AddProgressFormProps) 
           <Label htmlFor="class_id">Classroom *</Label>
           <select id="class_id" name="class_id" required className="w-full p-2 border rounded" title="Select the classroom for this assessment">
             <option value="">Select a classroom</option>
-            {classrooms.map((classroom: any) => (
+            {classrooms.map((classroom: Classroom) => (
               <option key={classroom.id} value={classroom.id}>
                 {classroom.name}
               </option>

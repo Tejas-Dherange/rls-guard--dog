@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
-export async function POST() {
+async function signOut() {
   const supabase = await createClient();
   
   try {
@@ -11,4 +11,12 @@ export async function POST() {
   }
   
   redirect('/auth/login');
+}
+
+export async function POST() {
+  return await signOut();
+}
+
+export async function GET() {
+  return await signOut();
 }

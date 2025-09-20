@@ -7,6 +7,46 @@ import { ClassAveragesDisplay } from '@/components/class-averages-display';
 import { AddProgressForm } from '@/components/add-progress-form';
 import Link from 'next/link';
 
+interface Student {
+  id: string;
+  name: string;
+  student_number: string;
+  [key: string]: unknown;
+}
+
+interface Classroom {
+  id: string;
+  name: string;
+  grade_level: number;
+  schools?: { name: string };
+  [key: string]: unknown;
+}
+
+interface Progress {
+  id: string;
+  student_id: string;
+  subject: string;
+  marks: number;
+  max_marks: number;
+  assessment_date: string;
+  students?: {
+    name: string;
+    student_number: string;
+  };
+  classrooms?: {
+    name: string;
+  };
+  [key: string]: unknown;
+}
+
+interface StudentProgressGroup {
+  student: {
+    name: string;
+    student_number: string;
+  };
+  records: Progress[];
+}
+
 async function getTeacherClassrooms(userId: string) {
   const supabase = await createClient();
   
@@ -28,7 +68,7 @@ async function getTeacherClassrooms(userId: string) {
 
   // Get students in those classrooms (simplified query)
   const classroomIds = classrooms?.map(c => c.id) || [];
-  let students: any[] = [];
+  let students: Student[] = [];
   let studentsError = null;
   
   if (classroomIds.length > 0) {
@@ -112,11 +152,11 @@ export default async function TeacherPage() {
   console.log('Teacher page - Errors:', errors);
 
   // Group progress by student for easier display
-  const studentProgress = progress.reduce((acc: any, record: any) => {
+  const studentProgress = progress.reduce((acc: Record<string, StudentProgressGroup>, record: Progress) => {
     const studentId = record.student_id;
     if (!acc[studentId]) {
       acc[studentId] = {
-        student: record.students,
+        student: record.students!,
         records: []
       };
     }
@@ -221,7 +261,7 @@ export default async function TeacherPage() {
               <CardContent>
                 <p className="text-2xl font-bold">
                   {progress.length > 0 
-                    ? (progress.reduce((acc: number, p: any) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1) + '%'
+                    ? (progress.reduce((acc: number, p: Progress) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1) + '%'
                     : 'N/A'
                   }
                 </p>
@@ -250,14 +290,14 @@ export default async function TeacherPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {classrooms.map((classroom: any) => (
+                  {classrooms.map((classroom: Classroom) => (
                     <div key={classroom.id} className="p-3 border rounded">
                       <h3 className="font-semibold">{classroom.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         Grade {classroom.grade_level} • {classroom.schools?.name || 'Unknown School'}
                       </p>
                       <p className="text-sm mt-1">
-                        Students: {students.filter((s: any) => s.class_id === classroom.id).length}
+                        Students: {students.filter((s: Student) => s.class_id === classroom.id).length}
                       </p>
                     </div>
                   ))}
@@ -272,8 +312,8 @@ export default async function TeacherPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {students.map((student: any) => {
-                    const studentClassroom = classrooms.find((c: any) => c.id === student.class_id);
+                  {students.map((student: Student) => {
+                    const studentClassroom = classrooms.find((c: Classroom) => c.id === student.class_id);
                     return (
                       <div key={student.id} className="flex justify-between items-center p-2 border rounded">
                         <div>
@@ -299,12 +339,12 @@ export default async function TeacherPage() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Assessments</CardTitle>
-              <CardDescription>Latest student progress records (RLS: Only your students' data)</CardDescription>
+              <CardDescription>Latest student progress records (RLS: Only your student&apos;s data)</CardDescription>
             </CardHeader>
             <CardContent>
               {progress.length > 0 ? (
                 <div className="space-y-3">
-                  {progress.slice(0, 10).map((record: any) => (
+                  {progress.slice(0, 10).map((record: Progress) => (
                     <div key={record.id} className="flex justify-between items-center p-3 border rounded">
                       <div className="flex-1">
                         <div className="flex items-center gap-4">

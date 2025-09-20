@@ -12,7 +12,7 @@ export default function LoginTest() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +36,11 @@ export default function LoginTest() {
       }
 
       setMessage('✅ Login successful!');
-      setUser(data.user);
+      setUser(data.user as unknown as Record<string, unknown>);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      setMessage(`❌ Login failed: ${error.message}`);
+      setMessage(`❌ Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -75,9 +75,9 @@ export default function LoginTest() {
 
       setMessage('✅ Signup successful! Check your email for confirmation.');
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
-      setMessage(`❌ Signup failed: ${error.message}`);
+      setMessage(`❌ Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

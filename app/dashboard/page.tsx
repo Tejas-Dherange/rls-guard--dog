@@ -5,6 +5,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { Settings, Users, BookOpen, GraduationCap, BarChart3 } from 'lucide-react';
+
+interface Student {
+  id: string;
+  name: string;
+  student_number: string;
+  class_id: string;
+  user_id: string;
+  classroom?: {
+    name: string;
+    grade_level: number;
+    school?: {
+      name: string;
+    };
+  };
+}
+
+interface Classroom {
+  id: string;
+  name: string;
+  grade_level: number;
+  schools?: {
+    name: string;
+  };
+}
+
+interface Progress {
+  id: string;
+  student_id: string;
+  subject: string;
+  marks: number;
+  max_marks: number;
+  assessment_date: string;
+  students?: {
+    name: string;
+  };
+  classrooms?: {
+    name: string;
+  };
+}
+
+interface StudentDashboardData {
+  student: Student[];
+  progress: Progress[];
+  allStudents: Student[];
+}
+
+interface TeacherDashboardData {
+  teacher?: unknown;
+  classrooms?: unknown[];
+  students: Student[];
+  progress: Progress[];
+}
 
 async function getStudentData(userId: string) {
   const supabase = await createClient();
@@ -95,7 +148,7 @@ async function getTeacherData(userId: string) {
 
   // Get students in teacher's classes (simplified)
   const classroomIds = classrooms?.map(c => c.id) || [];
-  let students: any[] = [];
+  let students: unknown[] = [];
   
   if (classroomIds.length > 0) {
     const { data: studentsData } = await supabase
@@ -106,7 +159,7 @@ async function getTeacherData(userId: string) {
   }
 
   // Get progress for teacher's students (simplified)
-  let progress: any[] = [];
+  let progress: unknown[] = [];
   if (classroomIds.length > 0) {
     const { data: progressData } = await supabase
       .from('progress')
@@ -185,7 +238,7 @@ export default async function Dashboard() {
   // Try to check if database tables exist and get data
   try {
     const supabase = await createClient();
-    const { data, error } = await supabase.from('profiles').select('count').limit(1);
+    const { error } = await supabase.from('profiles').select('count').limit(1);
     
     if (!error) {
       hasDatabase = true;
@@ -308,23 +361,24 @@ export default async function Dashboard() {
       </header>
 
       <main className="container mx-auto px-6 py-8">{user.role === 'student' && dashboardData && (
-        <StudentDashboard data={dashboardData} />
+        <StudentDashboard data={dashboardData as StudentDashboardData} />
       )}
 
       {user.role === 'teacher' && dashboardData && (
-        <TeacherDashboard data={dashboardData} />
+        <TeacherDashboard data={dashboardData as TeacherDashboardData} />
       )}
 
       {user.role === 'head_teacher' && dashboardData && (
-        <HeadTeacherDashboard data={dashboardData} />
+        <HeadTeacherDashboard data={dashboardData as HeadTeacherDashboardData} />
       )}
       </main>
     </div>
   );
 }
 
-function StudentDashboard({ data }: { data: any }) {
-  const { student, progress, allStudents } = data;
+function StudentDashboard({ data }: { data: unknown }) {
+  const { student, progress, allStudents } = data as StudentDashboardData;
+  const currentStudent = student?.[0]; // Get first student from array
 
   return (
     <div className="grid gap-6">
@@ -335,11 +389,11 @@ function StudentDashboard({ data }: { data: any }) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p><strong>Name:</strong> {student?.name}</p>
-              <p><strong>Student Number:</strong> {student?.student_number}</p>
-              <p><strong>Class:</strong> {student?.classroom?.name}</p>
-              <p><strong>Grade Level:</strong> {student?.classroom?.grade_level}</p>
-              <p><strong>School:</strong> {student?.classroom?.school?.name}</p>
+              <p><strong>Name:</strong> {currentStudent?.name}</p>
+              <p><strong>Student Number:</strong> {currentStudent?.student_number}</p>
+              <p><strong>Class:</strong> {currentStudent?.classroom?.name}</p>
+              <p><strong>Grade Level:</strong> {currentStudent?.classroom?.grade_level}</p>
+              <p><strong>School:</strong> {currentStudent?.classroom?.school?.name}</p>
             </div>
           </CardContent>
         </Card>
@@ -352,7 +406,7 @@ function StudentDashboard({ data }: { data: any }) {
             {progress && progress.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-2xl font-bold">
-                  {(progress.reduce((acc: number, p: any) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1)}%
+                  {(progress.reduce((acc: number, p: Progress) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1)}%
                 </p>
                 <p className="text-sm text-muted-foreground">Average Score</p>
                 <p className="text-sm">Total Assessments: {progress.length}</p>
@@ -373,16 +427,16 @@ function StudentDashboard({ data }: { data: any }) {
         <CardContent>
           <div className="text-sm space-y-2">
             <p><strong>Student Records Found:</strong> {allStudents?.length || 0}</p>
-            <p><strong>Active Student ID:</strong> {student?.id || 'Not found'}</p>
-            <p><strong>User ID:</strong> {student?.user_id || 'Not found'}</p>
-            <p><strong>Class ID:</strong> {student?.class_id || 'Not found'}</p>
+            <p><strong>Active Student ID:</strong> {currentStudent?.id || 'Not found'}</p>
+            <p><strong>User ID:</strong> {currentStudent?.user_id || 'Not found'}</p>
+            <p><strong>Class ID:</strong> {currentStudent?.class_id || 'Not found'}</p>
             <p><strong>Progress Records:</strong> {progress ? progress.length : 'null'}</p>
             
             {allStudents && allStudents.length > 1 && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
                 <p className="font-semibold text-yellow-800">Warning: Multiple Student Records Found:</p>
                 <div className="mt-2 space-y-1">
-                  {allStudents.map((s: any, index: number) => (
+                  {allStudents.map((s: Student, index: number) => (
                     <p key={s.id} className="text-xs">
                       {index + 1}. {s.name} (ID: {s.id}, Class: {s.class_id})
                     </p>
@@ -405,7 +459,7 @@ function StudentDashboard({ data }: { data: any }) {
         <CardContent>
           {progress && progress.length > 0 ? (
             <div className="space-y-4">
-              {progress.slice(0, 10).map((record: any) => (
+              {progress.slice(0, 10).map((record: Progress) => (
                 <div key={record.id} className="flex justify-between items-center p-3 border rounded">
                   <div>
                     <p className="font-medium">{record.subject}</p>
@@ -435,8 +489,8 @@ function StudentDashboard({ data }: { data: any }) {
   );
 }
 
-function TeacherDashboard({ data }: { data: any }) {
-  const { classrooms, students, progress } = data;
+function TeacherDashboard({ data }: { data: unknown }) {
+  const { classrooms, students, progress } = data as TeacherDashboardData;
 
   return (
     <div className="grid gap-6">
@@ -481,7 +535,7 @@ function TeacherDashboard({ data }: { data: any }) {
           <CardContent>
             {classrooms && classrooms.length > 0 ? (
               <div className="space-y-3">
-                {classrooms.map((classroom: any) => (
+                {(classrooms as Classroom[]).map((classroom: Classroom) => (
                   <div key={classroom.id} className="p-3 border rounded">
                     <p className="font-medium">{classroom.name}</p>
                     <p className="text-sm text-muted-foreground">
@@ -504,7 +558,7 @@ function TeacherDashboard({ data }: { data: any }) {
           <CardContent>
             {progress && progress.length > 0 ? (
               <div className="space-y-3">
-                {progress.slice(0, 8).map((record: any) => (
+                {progress.slice(0, 8).map((record: Progress) => (
                   <div key={record.id} className="flex justify-between items-center text-sm">
                     <div>
                       <p className="font-medium">{record.students?.name}</p>
@@ -526,7 +580,20 @@ function TeacherDashboard({ data }: { data: any }) {
   );
 }
 
-function HeadTeacherDashboard({ data }: { data: any }) {
+interface School {
+  id: string;
+  name: string;
+  address: string;
+}
+
+interface HeadTeacherDashboardData {
+  schools: School[];
+  classrooms: Classroom[];
+  students: Student[];
+  progress: Progress[];
+}
+
+function HeadTeacherDashboard({ data }: { data: HeadTeacherDashboardData }) {
   const { schools, classrooms, students, progress } = data;
 
   return (
@@ -534,7 +601,10 @@ function HeadTeacherDashboard({ data }: { data: any }) {
       <div className="grid md:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Schools</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Schools
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{schools?.length || 0}</p>
@@ -544,7 +614,10 @@ function HeadTeacherDashboard({ data }: { data: any }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Classrooms</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Classrooms
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{classrooms?.length || 0}</p>
@@ -554,7 +627,10 @@ function HeadTeacherDashboard({ data }: { data: any }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Students</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Students
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{students?.length || 0}</p>
@@ -564,7 +640,10 @@ function HeadTeacherDashboard({ data }: { data: any }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Assessments</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Assessments
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{progress?.length || 0}</p>
@@ -572,6 +651,27 @@ function HeadTeacherDashboard({ data }: { data: any }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Admin Panel Quick Access */}
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              School Administration
+            </div>
+            <Link href="/admin">
+              <Button>
+                <Settings className="h-4 w-4 mr-2" />
+                Access Admin Panel
+              </Button>
+            </Link>
+          </CardTitle>
+          <CardDescription>
+            Manage classroom assignments, teacher roles, and school operations
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
@@ -582,7 +682,7 @@ function HeadTeacherDashboard({ data }: { data: any }) {
           <CardContent>
             {schools && schools.length > 0 ? (
               <div className="space-y-3">
-                {schools.map((school: any) => (
+                {schools.map((school: School) => (
                   <div key={school.id} className="p-3 border rounded">
                     <p className="font-medium">{school.name}</p>
                     <p className="text-sm text-muted-foreground">{school.address}</p>
@@ -605,12 +705,12 @@ function HeadTeacherDashboard({ data }: { data: any }) {
               <div className="space-y-4">
                 <div className="p-3 bg-blue-50 rounded">
                   <p className="text-2xl font-bold">
-                    {(progress.reduce((acc: number, p: any) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1)}%
+                    {(progress.reduce((acc: number, p: Progress) => acc + (p.marks / p.max_marks * 100), 0) / progress.length).toFixed(1)}%
                   </p>
                   <p className="text-sm text-muted-foreground">System Average</p>
                 </div>
                 <div className="space-y-2">
-                  {progress.slice(0, 5).map((record: any) => (
+                  {progress.slice(0, 5).map((record: Progress) => (
                     <div key={record.id} className="flex justify-between items-center text-sm">
                       <div>
                         <p className="font-medium">{record.students?.name}</p>

@@ -25,7 +25,7 @@ interface ClassAveragesData {
   data: ClassAverage[];
   count: number;
   userRole: string;
-  appliedFilters: any;
+  appliedFilters: Record<string, unknown>;
 }
 
 export function ClassAveragesDisplay() {
@@ -115,7 +115,16 @@ export function ClassAveragesDisplay() {
   }, []);
 
   // Group averages by class and calculate overall statistics
-  const groupedByClass = averages.reduce((acc, avg) => {
+interface ClassGroupData {
+  className: string;
+  schoolName: string;
+  subjects: ClassAverage[];
+  totalStudents: number;
+  totalAssessments: number;
+  overallAverage: number;
+}
+
+  const groupedByClass = averages.reduce((acc: Record<string, ClassGroupData>, avg) => {
     if (!acc[avg.classId]) {
       acc[avg.classId] = {
         className: avg.className,
@@ -131,7 +140,7 @@ export function ClassAveragesDisplay() {
     acc[avg.classId].totalAssessments += avg.totalAssessments;
     
     return acc;
-  }, {} as any);
+  }, {});
 
   // Calculate overall averages for each class
   Object.keys(groupedByClass).forEach(classId => {
@@ -223,7 +232,7 @@ export function ClassAveragesDisplay() {
             <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No Analytics Data</h3>
             <p className="text-muted-foreground mb-4">
-              Add some progress records and click "Recalculate" to generate analytics.
+              Add some progress records and click &quot;Recalculate&quot; to generate analytics.
             </p>
             <Button onClick={triggerCalculation} disabled={calculating}>
               {calculating ? 'Calculating...' : 'Generate Analytics'}
@@ -292,7 +301,7 @@ export function ClassAveragesDisplay() {
           {/* Class Breakdown */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Class Performance Breakdown</h3>
-            {Object.entries(groupedByClass).map(([classId, classData]: [string, any]) => (
+            {Object.entries(groupedByClass).map(([classId, classData]: [string, ClassGroupData]) => (
               <Card key={classId}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">

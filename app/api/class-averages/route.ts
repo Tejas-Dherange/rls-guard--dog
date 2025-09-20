@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const subject = searchParams.get('subject');
 
     // Build query
-    let query: any = {};
+    const query: Record<string, string> = {};
     
     if (classId) {
       query.class_id = classId;

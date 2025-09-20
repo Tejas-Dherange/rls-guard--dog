@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { ClassAverage } from '@/lib/models/mongodb';
 import { createClient } from '@/lib/supabase/server';
@@ -21,10 +21,10 @@ interface ClassroomInfo {
   school_id: string;
   schools: {
     name: string;
-  };
+  }[];
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Check authentication
     const user = await getCurrentUser();
@@ -72,14 +72,14 @@ export async function POST(request: NextRequest) {
 
     // Create a map of classroom info
     const classroomMap = new Map<string, ClassroomInfo>();
-    classrooms?.forEach((classroom: any) => {
+    classrooms?.forEach((classroom: ClassroomInfo) => {
       classroomMap.set(classroom.id, classroom);
     });
 
     // Group progress by class and subject
     const classSubjectGroups = new Map<string, ProgressRecord[]>();
 
-    progressRecords?.forEach((record: any) => {
+    progressRecords?.forEach((record: ProgressRecord) => {
       const key = `${record.class_id}_${record.subject}`;
       if (!classSubjectGroups.has(key)) {
         classSubjectGroups.set(key, []);
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         class_id: classId,
         class_name: classroom.name,
         school_id: classroom.school_id,
-        school_name: classroom.schools.name,
+        school_name: classroom.schools[0]?.name || 'Unknown School',
         subject: subject,
         average_score: Math.round(averageScore * 100) / 100, // Round to 2 decimal places
         total_students: uniqueStudents,

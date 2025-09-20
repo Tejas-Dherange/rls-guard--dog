@@ -27,18 +27,12 @@ interface Classroom {
   }
 }
 
-interface School {
-  id: string
-  name: string
-}
-
 interface ClassroomAssignmentFormProps {
   classrooms: Classroom[]
   teachers: Teacher[]
-  schools: School[]
 }
 
-export function ClassroomAssignmentForm({ classrooms, teachers, schools }: ClassroomAssignmentFormProps) {
+export function ClassroomAssignmentForm({ classrooms, teachers }: ClassroomAssignmentFormProps) {
   const [loading, setLoading] = useState(false)
   const [selectedClassroom, setSelectedClassroom] = useState('')
   const [selectedTeacher, setSelectedTeacher] = useState('')

@@ -2,6 +2,23 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ClassroomAssignmentForm } from '@/components/classroom-assignment-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+
+interface Teacher {
+  id: string;
+  full_name: string;
+  email: string;
+}
+
+interface Classroom {
+  id: string;
+  name: string;
+  grade_level: number;
+  teacher_id?: string;
+  school?: { name: string };
+  teacher?: { full_name: string; email: string };
+}
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -56,6 +73,18 @@ export default async function AdminPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      {/* Navigation Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Link href="/dashboard">
+          <Button variant="outline" size="sm">
+            ← Back to Dashboard
+          </Button>
+        </Link>
+        <div className="text-sm text-muted-foreground">
+          Dashboard / Admin Panel
+        </div>
+      </div>
+
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">School Administration</h1>
         <p className="text-muted-foreground">Manage classroom assignments and school operations</p>
@@ -84,7 +113,7 @@ export default async function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {classroomsWithDetails?.map((classroom: any) => (
+                  {classroomsWithDetails?.map((classroom: Classroom) => (
                     <tr key={classroom.id} className="hover:bg-gray-50">
                       <td className="border border-gray-300 px-4 py-2 font-medium">
                         {classroom.name}
@@ -137,7 +166,6 @@ export default async function AdminPage() {
             <ClassroomAssignmentForm 
               classrooms={classroomsWithDetails || []}
               teachers={teachers || []}
-              schools={schools || []}
             />
           </CardContent>
         </Card>
@@ -152,8 +180,8 @@ export default async function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {teachers?.map((teacher: any) => {
-                const assignedClasses = classroomsWithDetails?.filter((c: any) => c.teacher_id === teacher.id) || []
+              {teachers?.map((teacher: Teacher) => {
+                const assignedClasses = classroomsWithDetails?.filter((c: Classroom) => c.teacher_id === teacher.id) || []
                 return (
                   <div key={teacher.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
@@ -171,7 +199,7 @@ export default async function AdminPage() {
                       <div className="mt-2">
                         <p className="text-sm font-medium mb-1">Assigned Classes:</p>
                         <div className="flex flex-wrap gap-2">
-                          {assignedClasses.map((cls: any) => (
+                          {assignedClasses.map((cls: Classroom) => (
                             <span 
                               key={cls.id}
                               className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
