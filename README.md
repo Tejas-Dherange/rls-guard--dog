@@ -247,17 +247,7 @@ guard-dog/
 ### User Roles for Testing
 Use the seed data to test different roles:
 
-**Teacher Account:**
-- Email: `john.teacher@school.edu`
-- Role: `teacher`
 
-**Head Teacher Account:**  
-- Email: `mary.head@school.edu`
-- Role: `head_teacher`
-
-**Student Account:**
-- Email: `alice.student@school.edu` 
-- Role: `student`
 
 ### Test Scenarios
 1. **Student Login** - Should only see own progress
@@ -280,8 +270,7 @@ This project is licensed under the MIT License.
 
 ## 🔗 Live Demo
 
-- **Vercel Deployment**: [Your Vercel URL]
-- **GitHub Repository**: [Your GitHub URL]
+- **Vercel Deployment**: [Demo Link](https://rls-guard-dog-sepia.vercel.app)
 
 ---
 
