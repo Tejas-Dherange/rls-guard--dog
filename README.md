@@ -280,8 +280,8 @@ This project is licensed under the MIT License.
 
 ## 🔗 Live Demo
 
-- **Vercel Deployment**: [Your Vercel URL]
-- **GitHub Repository**: [Your GitHub URL]
+- **Vercel Deployment**: [https://rls-guard-dog-sepia.vercel.app]
+- **GitHub Repository**: [Your GitHub URL](https://github.com/Tejas-Dherange/rls-guard-dog)
 
 ---
 
