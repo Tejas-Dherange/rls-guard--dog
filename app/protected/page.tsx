@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
+import { InfoIcon, User } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -12,25 +12,71 @@ export default async function ProtectedPage() {
     redirect("/auth/login");
   }
 
+  const user = data.claims?.sub ? {
+    id: data.claims.sub,
+    email: data.claims?.email || 'Not provided',
+    role: data.claims?.user_role || 'user',
+    aud: data.claims?.aud || 'authenticated',
+  } : null;
+
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
+    <div className="space-y-8">
+      <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <InfoIcon size="20" className="text-blue-600 dark:text-blue-400" />
+          <p className="text-blue-800 dark:text-blue-200 text-sm">
+            This is a protected area. Only authenticated users can access this page.
+          </p>
         </div>
       </div>
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(data.claims, null, 2)}
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
-      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User size="20" />
+            User Profile
+          </CardTitle>
+          <CardDescription>
+            Your account information and authentication details
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {user && (
+            <div className="grid gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-muted-foreground">User ID:</span>
+                <code className="text-xs bg-muted px-2 py-1 rounded">{user.id}</code>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-muted-foreground">Email:</span>
+                <span className="text-sm">{user.email}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-muted-foreground">Role:</span>
+                <Badge variant="secondary">{user.role}</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-muted-foreground">Audience:</span>
+                <Badge variant="outline">{user.aud}</Badge>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Claims</CardTitle>
+          <CardDescription>
+            Complete JWT claims data for debugging purposes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs bg-muted p-4 rounded-md overflow-auto max-h-64 font-mono">
+            {JSON.stringify(data.claims, null, 2)}
+          </pre>
+        </CardContent>
+      </Card>
     </div>
   );
 }

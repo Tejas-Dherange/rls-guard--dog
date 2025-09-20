@@ -4,72 +4,109 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Loader2, BarChart3, TrendingUp, Users, BookOpen, RefreshCw } from 'lucide-react';
 
 interface ClassAverage {
   _id: string;
-  class_id: string;
-  class_name: string;
-  school_id: string;
-  school_name: string;
+  classId: string;
+  className: string;
+  schoolId: string;
+  schoolName: string;
   subject: string;
-  average_score: number;
-  total_students: number;
-  assessment_period: string;
-  calculated_at: string;
+  averageScore: number;
+  totalStudents: number;
+  totalAssessments: number;
+  lastUpdated: string;
+  calculatedBy: string;
+}
+
+interface ClassAveragesData {
+  success: boolean;
+  data: ClassAverage[];
+  count: number;
+  userRole: string;
+  appliedFilters: any;
 }
 
 export function ClassAveragesDisplay() {
   const [averages, setAverages] = useState<ClassAverage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [calculating, setCalculating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const fetchAverages = async () => {
-    setIsLoading(true);
+  const fetchAverages = async (isRefresh = false) => {
     try {
-      const response = await fetch('/api/class-averages');
-      if (!response.ok) throw new Error('Failed to fetch averages');
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
       
-      const data = await response.json();
-      setAverages(data.averages || []);
-    } catch (error) {
-      console.error('Error fetching averages:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to load class averages' 
-      });
+      // Try MongoDB version first, fallback to test version
+      let response = await fetch('/api/analytics/class-averages');
+      let data: ClassAveragesData = await response.json();
+      
+      // If MongoDB version fails, try test version
+      if (!data.success || data.data.length === 0) {
+        console.log('Trying test version without MongoDB...');
+        response = await fetch('/api/analytics/class-averages-test');
+        data = await response.json();
+      }
+      
+      if (data.success) {
+        setAverages(data.data);
+        if (data.data.length > 0) {
+          setLastUpdated(data.data[0].lastUpdated);
+        }
+      } else {
+        setError('Failed to fetch class averages');
+      }
+    } catch (err) {
+      setError('Error fetching class averages');
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const calculateAverages = async () => {
-    setIsCalculating(true);
-    setMessage(null);
-    
+  const triggerCalculation = async () => {
     try {
-      const response = await fetch('/api/calculate-averages', {
+      setCalculating(true);
+      setError(null);
+      
+      // Try MongoDB version first, fallback to test version
+      let response = await fetch('/api/analytics/class-averages', {
         method: 'POST',
       });
       
-      if (!response.ok) throw new Error('Failed to calculate averages');
+      let result = await response.json();
       
-      const data = await response.json();
-      setMessage({ 
-        type: 'success', 
-        text: `Successfully calculated averages for ${data.classesProcessed || 0} classes` 
-      });
+      // If MongoDB version fails, try test version
+      if (!result.success) {
+        console.log('Trying test calculation without MongoDB...');
+        response = await fetch('/api/analytics/class-averages-test', {
+          method: 'POST',
+        });
+        result = await response.json();
+      }
       
-      // Refresh the averages display
-      await fetchAverages();
-    } catch (error) {
-      console.error('Error calculating averages:', error);
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to calculate averages' 
-      });
+      if (result.success) {
+        // Wait a moment then refresh the data
+        setTimeout(() => {
+          fetchAverages(true);
+        }, 1000);
+      } else {
+        setError('Failed to trigger calculation: ' + (result.error || 'Unknown error'));
+      }
+    } catch (err) {
+      setError('Error triggering calculation');
+      console.error(err);
     } finally {
-      setIsCalculating(false);
+      setCalculating(false);
     }
   };
 
@@ -77,105 +114,238 @@ export function ClassAveragesDisplay() {
     fetchAverages();
   }, []);
 
+  // Group averages by class and calculate overall statistics
+  const groupedByClass = averages.reduce((acc, avg) => {
+    if (!acc[avg.classId]) {
+      acc[avg.classId] = {
+        className: avg.className,
+        schoolName: avg.schoolName,
+        subjects: [],
+        totalStudents: avg.totalStudents,
+        totalAssessments: 0,
+        overallAverage: 0
+      };
+    }
+    
+    acc[avg.classId].subjects.push(avg);
+    acc[avg.classId].totalAssessments += avg.totalAssessments;
+    
+    return acc;
+  }, {} as any);
+
+  // Calculate overall averages for each class
+  Object.keys(groupedByClass).forEach(classId => {
+    const classData = groupedByClass[classId];
+    const totalScore = classData.subjects.reduce((sum: number, subject: ClassAverage) => 
+      sum + subject.averageScore, 0);
+    classData.overallAverage = totalScore / classData.subjects.length;
+  });
+
+  const totalClasses = Object.keys(groupedByClass).length;
+  const totalStudents = averages.reduce((sum, avg) => sum + avg.totalStudents, 0);
+  const totalAssessments = averages.reduce((sum, avg) => sum + avg.totalAssessments, 0);
+  const overallSystemAverage = averages.length > 0 
+    ? averages.reduce((sum, avg) => sum + avg.averageScore, 0) / averages.length 
+    : 0;
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-6">
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Loading analytics...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Class Averages</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Class Analytics (MongoDB + Edge Functions)
+            </CardTitle>
             <CardDescription>
-              View calculated class averages stored in MongoDB
+              Performance analytics powered by Supabase Edge Functions and MongoDB
+              {lastUpdated && (
+                <span className="block mt-1 text-xs">
+                  Last calculated: {new Date(lastUpdated).toLocaleString()}
+                </span>
+              )}
             </CardDescription>
           </div>
-          <Button 
-            onClick={calculateAverages} 
-            disabled={isCalculating}
-            className="ml-4"
-          >
-            {isCalculating ? 'Calculating...' : 'Calculate Averages'}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {message && (
-          <div className={`p-3 rounded-md mb-4 ${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {message.text}
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => fetchAverages(true)} 
+              disabled={refreshing}
+              variant="outline"
+              size="sm"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+            <Button 
+              onClick={triggerCalculation} 
+              disabled={calculating}
+              className="flex items-center gap-2"
+            >
+              {calculating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <TrendingUp className="h-4 w-4" />
+              )}
+              {calculating ? 'Calculating...' : 'Recalculate'}
+            </Button>
           </div>
-        )}
+        </CardHeader>
+      </Card>
 
-        {isLoading ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Loading class averages...</p>
-          </div>
-        ) : averages.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              No class averages calculated yet. Click "Calculate Averages" to generate data.
+      {error && (
+        <Card className="border-red-200">
+          <CardContent className="p-4">
+            <p className="text-red-600 flex items-center gap-2">
+              Error: {error}
             </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid gap-4">
-              {averages.map((average) => (
-                <div key={average._id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium">{average.class_name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {average.school_name}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">
-                      {average.subject}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Average Score</p>
-                      <p className="text-lg font-bold text-blue-600">
-                        {average.average_score.toFixed(1)}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Students</p>
-                      <p className="text-lg font-bold">
-                        {average.total_students}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Period</p>
-                      <p className="text-sm">
-                        {average.assessment_period}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Calculated</p>
-                      <p className="text-sm">
-                        {new Date(average.calculated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {averages.length === 0 && !loading ? (
+        <Card>
+          <CardContent className="text-center p-8">
+            <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Analytics Data</h3>
+            <p className="text-muted-foreground mb-4">
+              Add some progress records and click "Recalculate" to generate analytics.
+            </p>
+            <Button onClick={triggerCalculation} disabled={calculating}>
+              {calculating ? 'Calculating...' : 'Generate Analytics'}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Overview Statistics */}
+          <div className="grid md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Classes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{totalClasses}</p>
+                <p className="text-sm text-muted-foreground">With analytics</p>
+              </CardContent>
+            </Card>
             
-            <div className="mt-4 pt-4 border-t">
-              <Button 
-                onClick={fetchAverages} 
-                variant="outline" 
-                size="sm"
-              >
-                Refresh Data
-              </Button>
-            </div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Students
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{totalStudents}</p>
+                <p className="text-sm text-muted-foreground">Total enrolled</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Assessments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{totalAssessments}</p>
+                <p className="text-sm text-muted-foreground">Total recorded</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  System Average
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{overallSystemAverage.toFixed(1)}%</p>
+                <Badge variant={overallSystemAverage >= 80 ? "default" : "secondary"}>
+                  {overallSystemAverage >= 80 ? "Excellent" : overallSystemAverage >= 70 ? "Good" : "Needs Improvement"}
+                </Badge>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Class Breakdown */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Class Performance Breakdown</h3>
+            {Object.entries(groupedByClass).map(([classId, classData]: [string, any]) => (
+              <Card key={classId}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      {classData.className}
+                    </span>
+                    <Badge variant={classData.overallAverage >= 80 ? "default" : "secondary"}>
+                      {classData.overallAverage.toFixed(1)}% Overall
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {classData.schoolName} • {classData.totalStudents} students • {classData.totalAssessments} total assessments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {classData.subjects.map((subject: ClassAverage) => (
+                      <div key={subject._id} className="p-4 border rounded-lg bg-muted/30">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-medium">{subject.subject}</h4>
+                          <Badge variant={subject.averageScore >= 80 ? "default" : "secondary"}>
+                            {subject.averageScore.toFixed(1)}%
+                          </Badge>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Students:</span>
+                            <span className="font-medium">{subject.totalStudents}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Assessments:</span>
+                            <span className="font-medium">{subject.totalAssessments}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Updated:</span>
+                            <span className="font-medium">{new Date(subject.lastUpdated).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Source:</span>
+                            <Badge variant="outline" className="text-xs">
+                              {subject.calculatedBy}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

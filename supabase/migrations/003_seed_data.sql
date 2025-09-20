@@ -5,9 +5,10 @@ INSERT INTO schools (id, name, address) VALUES
 
 -- Insert sample profiles (these would normally be created via Supabase Auth)
 -- Note: In production, these would be created through the auth trigger
+-- Using actual user ID from your profile
 INSERT INTO profiles (id, email, full_name, role) VALUES
+  ('37d5c7aa-8429-4471-9d28-fd30fd607dce', 'tejas.personal.hackathon@gmail.com', 'Tejas', 'head_teacher'),
   ('550e8400-e29b-41d4-a716-446655440101', 'john.teacher@school.edu', 'John Smith', 'teacher'),
-  ('550e8400-e29b-41d4-a716-446655440102', 'mary.head@school.edu', 'Mary Johnson', 'head_teacher'),
   ('550e8400-e29b-41d4-a716-446655440103', 'alice.student@school.edu', 'Alice Brown', 'student'),
   ('550e8400-e29b-41d4-a716-446655440104', 'bob.student@school.edu', 'Bob Wilson', 'student');
 

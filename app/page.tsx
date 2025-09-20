@@ -1,59 +1,133 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth-safe";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function Home() {
   // Check if user is already authenticated and redirect to dashboard
   const user = await getCurrentUser();
   if (user) {
-    redirect('/dashboard-simple');
+    redirect('/dashboard');
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>RLS Guard Dog</Link>
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="text-xl font-bold text-gray-900">
+                School Management System
+              </Link>
             </div>
-            {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
+            <div className="flex items-center space-x-4">
+              <ThemeSwitcher />
+              <AuthButton />
+            </div>
           </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
+            Modern School
+            <span className="text-blue-600"> Management</span>
+          </h1>
+          <p className="mt-6 max-w-2xl mx-auto text-xl text-gray-600">
+            Streamline your educational institution with our comprehensive management system. 
+            Track student progress, manage classrooms, and analyze performance data all in one place.
+          </p>
+          <div className="mt-10">
+            <Link href="/auth/login">
+              <Button size="lg" className="px-8 py-3 text-lg">
+                Get Started
+              </Button>
+            </Link>
+          </div>
         </div>
 
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
-            <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-              target="_blank"
-              className="font-bold hover:underline"
-              rel="noopener noreferrer"
-            >
-              Supabase
-            </a>
-          </p>
-          <ThemeSwitcher />
-        </footer>
-      </div>
-    </main>
+        {/* Features Section */}
+        <div className="mt-20">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <Card className="text-center">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">
+                  Student Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-gray-600">
+                  Efficiently track student information, enrollment, and academic progress 
+                  with our intuitive student management tools.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">
+                  Performance Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-gray-600">
+                  Gain insights into student performance with detailed analytics, 
+                  progress tracking, and comprehensive reporting features.
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900">
+                  Classroom Organization
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-gray-600">
+                  Organize classrooms, manage teacher assignments, and coordinate 
+                  academic activities across your institution.
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="mt-20 text-center">
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Ready to get started?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Join educational institutions already using our platform to manage their operations.
+            </p>
+            <div className="space-x-4">
+              <Link href="/auth/login">
+                <Button size="lg">Sign In</Button>
+              </Link>
+              <Link href="/auth/sign-up">
+                <Button variant="outline" size="lg">Create Account</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-600">
+            <p>&copy; 2025 School Management System. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

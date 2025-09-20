@@ -18,9 +18,18 @@ export default async function Navbar() {
           {user ? (
             <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">Hello, {user.email}</span>
-                <Link href="/dashboard-simple">
+                <Link href="/dashboard">
                   <Button variant="outline">Dashboard</Button>
-                </Link> 
+                </Link>
+                <Link href="/fix-data">
+                  <Button variant="outline" size="sm" className="bg-green-50 hover:bg-green-100">Fix Data</Button>
+                </Link>
+                <Link href="/debug">
+                  <Button variant="outline" size="sm">Debug</Button>
+                </Link>
+                <Link href="/admin">
+                  <Button variant="outline" size="sm">Admin</Button>
+                </Link>
                 <Link href="/auth/logout">
                   <Button variant="ghost">Logout</Button>
                 </Link>
@@ -31,9 +40,10 @@ export default async function Navbar() {
                 <Link href="/auth/login">
                     <Button variant="outline">Login</Button>
                 </Link>
-                <Link href="/auth/register">
+                <Link href="/auth/sign-up">
                     <Button variant="ghost">Sign Up</Button>
                 </Link>
+                <ThemeSwitcher />
             </div>
             )}
         </div>

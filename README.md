@@ -1,15 +1,15 @@
-# RLS Guard Dog 🐕‍🦺
+# Guard Dog School Management System
 
 A comprehensive Next.js school management system demonstrating **Row-Level Security (RLS)** with role-based access control using **Supabase**, **MongoDB Atlas**, and **Edge Functions**.
 
-## 🚀 Project Overview
+## Project Overview
 
 This project simulates a school system with three user roles:
 - **Students** - Can only view their own progress
 - **Teachers** - Can manage students in their assigned classes  
 - **Head Teachers** - Can view all data across their school
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Radix UI
 - **Backend**: Supabase (Auth + Database + Edge Functions)
@@ -17,7 +17,7 @@ This project simulates a school system with three user roles:
 - **Authentication**: Supabase Auth with role-based permissions
 - **Deployment**: Vercel (Next.js) + Supabase (Functions)
 
-## 📊 Database Schema
+## Database Schema
 
 ### Supabase (PostgreSQL)
 - `profiles` - User profiles with roles
@@ -30,7 +30,7 @@ This project simulates a school system with three user roles:
 - `class_averages` - Calculated class performance metrics
 - `analytics` - School-wide performance analytics
 
-## 🔐 Row-Level Security Policies
+## Row-Level Security Policies
 
 ### Students
 ```sql
@@ -71,7 +71,7 @@ CREATE POLICY "Head teachers can manage school progress" ON progress
   );
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -149,7 +149,7 @@ npm run dev
 
 Visit `http://localhost:3000` to see the application.
 
-## 📱 Features & Pages
+## Features & Pages
 
 ### Authentication (`/auth`)
 - **Login** - Email/password authentication
@@ -167,7 +167,7 @@ Visit `http://localhost:3000` to see the application.
 - Trigger average calculations
 - MongoDB integration display
 
-## 🔄 MongoDB Integration
+## MongoDB Integration
 
 The system uses both Supabase (PostgreSQL) and MongoDB for different purposes:
 
