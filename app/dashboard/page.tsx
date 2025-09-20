@@ -270,32 +270,32 @@ export default async function Dashboard() {
   if (!hasDatabase) {
     // Show setup instructions if database isn't ready
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-6 py-12">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900">Welcome to School Management System</h1>
-              <p className="text-gray-600 mt-2">Please complete the database setup to continue</p>
+              <h1 className="text-3xl font-bold text-foreground">Welcome to School Management System</h1>
+              <p className="text-muted-foreground mt-2">Please complete the database setup to continue</p>
             </div>
 
             <Card className="shadow-sm">
               <CardHeader className="border-b">
-                <CardTitle className="text-xl text-gray-800">Database Setup Required</CardTitle>
+                <CardTitle className="text-xl text-foreground">Database Setup Required</CardTitle>
                 <CardDescription>Complete the following steps to access the system</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2">Account Information</h4>
-                    <div className="space-y-1 text-sm text-gray-600">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <h4 className="font-semibold text-foreground mb-2">Account Information</h4>
+                    <div className="space-y-1 text-sm text-muted-foreground">
                       <p>Email: {user.email}</p>
                       <p>Role: {user.role?.replace('_', ' ').toUpperCase()}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-gray-800">Setup Instructions</h4>
-                    <ol className="space-y-2 text-sm text-gray-600">
+                    <h4 className="font-semibold text-foreground">Setup Instructions</h4>
+                    <ol className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex items-start">
                         <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5">1</span>
                         Open <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Supabase Dashboard</a>
@@ -333,13 +333,13 @@ export default async function Dashboard() {
 
   // If database is ready, show role-based dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-background">
+      <header className="bg-card shadow-sm border-b">
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">School Management System</h1>
-              <p className="text-gray-600">Welcome back, {user.full_name || user.email}</p>
+              <h1 className="text-2xl font-bold text-foreground">School Management System</h1>
+              <p className="text-muted-foreground">Welcome back, {user.full_name || user.email}</p>
               <Badge variant="secondary" className="mt-1">
                 {user.role?.replace('_', ' ').toUpperCase()}
               </Badge>

@@ -94,11 +94,11 @@ export default function Navbar() {
 
   if (loading) {
     return (
-      <div className="w-full border-2 outline shadow-sm backdrop-blur-md">
+      <div className="w-full border-2 border-border shadow-sm backdrop-blur-md bg-background/80">
         <div className="container mx-auto p-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">Guard Dog</Link>
+          <Link href="/" className="text-xl font-bold text-foreground">Guard Dog</Link>
           <div className="flex items-center gap-4">
-            <div className="h-9 w-20 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-9 w-20 bg-muted animate-pulse rounded"></div>
             <ThemeSwitcher />
           </div>
         </div>
@@ -107,13 +107,13 @@ export default function Navbar() {
   }
 
   return (
-    <div className="w-full border-2 outline shadow-sm backdrop-blur-md">
+    <div className="w-full border-2 border-border shadow-sm backdrop-blur-md bg-background/80">
       <div className="container mx-auto p-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold">Guard Dog</Link>
+        <Link href="/" className="text-xl font-bold text-foreground">Guard Dog</Link>
         <div></div>
         {user && profile ? (
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium">Hello, {profile.email}</span>
+            <span className="text-sm font-medium text-foreground">Hello, {profile.email}</span>
             <Link href="/dashboard">
               <Button variant="outline">Dashboard</Button>
             </Link>

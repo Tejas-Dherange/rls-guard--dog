@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type UserRole = 'student' | 'teacher' | 'head_teacher';
 
@@ -83,6 +84,7 @@ export function SignUpForm({
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -94,6 +96,7 @@ export function SignUpForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -104,6 +107,7 @@ export function SignUpForm({
                   onChange={(e) => setRole(e.target.value as UserRole)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   aria-label="Select your role"
+                  disabled={isLoading}
                 >
                   <option value="student">Student</option>
                   <option value="teacher">Teacher</option>
@@ -136,7 +140,14 @@ export function SignUpForm({
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Sign up"
+                )}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
